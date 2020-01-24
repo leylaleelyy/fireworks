@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>fireworks</title>
+  <link rel="stylesheet" href="./asserts/css/style.css">
+  <link rel="icon" type="image/x-icon" href="./asserts/images/favicon.ico" />
+  <style>
+    .tubiao {
+      width: 15vw;
+      height: 15vw;
+      cursor: pointer;
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 1000;
+    }
+    
+    .tubiao1,
+    .tubiao2 {
+      width: 13vw;
+      height: 13vw;
+      position: absolute;
+      top: 2vw;
+      right: 2vw;
+    }
+    
+    .tubiao1 {
+      background-image: url("./asserts/images/pause.png");
+      background-size: 85%;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .tubiao2 {
+      background-image: url("./asserts/images/music.png");
+      background-size: 100%;
+      background-repeat: no-repeat;
+      background-position: center;
+      animation: TuBiao 3s linear infinite;
+    }
+    
+    @keyframes TuBiao {
+      0% {
+        transform: rotate(0deg);
+      }
+      50% {
+        transform: rotate(180deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    #spring-text {
+      position: absolute;
+      z-index: 999;
+    }
+    
+    h1 {
+      color: #52E6FF;
+      position: absolute;
+      top: 150px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      line-height: 200px;
+      font-size: 100px;
+      text-align: center;
+      margin: auto;
+      animation: blink 1s linear infinite;
+      /*线性变化，无限重复*/
+      z-index: 999;
+    }
+    
+    @keyframes blink {
+      0% {
+        opacity: 1;
+        color: rgb(82, 230, 255);
+      }
+      50% {
+        opacity: 0.5;
+        color: rgb(148, 120, 224);
+      }
+      50% {
+        opacity: 0.5;
+        color: rgb(82, 230, 255);
+      }
+      100% {
+        opacity: 0;
+        color: #52E6FF;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- partial:index.partial.html -->
+  <div id="jsi-fireworks-container" class="container">
+    <div class="tubiao" id="tb">
+      <div class="tubiao1" id="tb1" style="display: none;"></div>
+      <div class="tubiao2" id="tb2"></div>
+    </div>
+
+    <audio src="./asserts/video/happynewyear.mp3" autoplay="autoplay" loop preload="auto" id="music"></audio>
+    <h1>
+      <span id="title" class="blink">10</span>
+    </h1>
+    <!-- 尝试移动鼠标并单击文本区域 -->
+    <div id="title-desktop" class="hidden">
+      <div>2020</div>
+      <div>Happy</div>
+      <div>New Year!</div>
+    </div>
+    <div id="title-mobile" class="hidden">
+      2020 Happy New Year ~
+    </div>
+
+    <canvas id="spring-text"></canvas>
+
+  </div>
+
+  <!-- partial -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+  <script src="./asserts/js/script.js"></script>
+  <script>
+    // JavaScript Document
+    var number = false;
+    var music = document.getElementById("music");
+    var tb = document.getElementById("tb");
+
+    tb.onclick = function() {
+      if (number === false) {
+        number = true;
+        document.getElementById("tb1").style.display = "block";
+        document.getElementById("tb2").style.display = "none";
+
+        music.pause();
+
+      } else {
+        document.getElementById("tb1").style.display = "none";
+        document.getElementById("tb2").style.display = "block";
+        number = false;
+        music.play();
+      }
+    };
+  </script>
+  <script>
+    // WRITTEN BY TRUMAN HEBERLE
+    var COLOR = "#52E6FF"
+    var MESSAGE = document.getElementById("title-desktop").textContent;
+
+    var FONT_SIZE = 100;
+    var AMOUNT = 2000;
+    var SIZE = 2;
+    var INITIAL_DISPLACEMENT = 500;
+    var INITIAL_VELOCITY = 5;
+    var VELOCITY_RETENTION = 0.95;
+    var SETTLE_SPEED = 1;
+    var FLEE_SPEED = 1;
+    var FLEE_DISTANCE = 50;
+    var FLEE = true;
+    var SCATTER_VELOCITY = 3;
+    var SCATTER = true;
+
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // Mobile
+      MESSAGE = document.getElementById("title-mobile").textContent;
+
+      FONT_SIZE = 100;
+      AMOUNT = 3000;
+      SIZE = 2;
+      INITIAL_DISPLACEMENT = 500;
+      SETTLE_SPEED = 1;
+      FLEE = false;
+      SCATTER_VELOCITY = 2;
+    }
+
+    const canvas = document.getElementById("spring-text");
+    const ctx = canvas.getContext("2d");
+
+    var POINTS = [];
+    var MOUSE = {
+      x: 0,
+      y: 0
+    }
+
+    function Point(x, y, r, g, b, a) {
+      var angle = Math.random() * 6.28;
+      this.dest_x = x;
+      this.dest_y = y;
+      this.original_r = r;
+      this.original_g = g;
+      this.original_a = a;
+      this.x = canvas.width / 2 - x + (Math.random() - 0.5) * INITIAL_DISPLACEMENT;
+      this.y = canvas.height / 2 - y + (Math.random() - 0.5) * INITIAL_DISPLACEMENT;
+      this.velx = INITIAL_VELOCITY * Math.cos(angle);
+      this.vely = INITIAL_VELOCITY * Math.sin(angle);
+      this.target_x = canvas.width / 2 - x;
+      this.target_y = canvas.height / 2 - y;
+      this.r = r;
+      this.g = g;
+      this.b = b;
+      this.a = a;
+
+      this.getX = function() {
+        return this.x;
+      }
+
+      this.getY = function() {
+        return this.y;
+      }
+
+      this.resetTarget = function() {
+        this.target_x = canvas.width / 2 - this.dest_x;
+        this.target_y = canvas.height / 2 - this.dest_y;
+      }
+
+      this.fleeFrom = function(x, y) {
+        this.velx -= ((MOUSE.x - this.x) * FLEE_SPEED / 10);
+        this.vely -= ((MOUSE.y - this.y) * FLEE_SPEED / 10);
+      }
+
+      this.settleTo = function(x, y) {
+        this.velx += ((this.target_x - this.x) * SETTLE_SPEED / 100);
+        this.vely += ((this.target_y - this.y) * SETTLE_SPEED / 100);
+        this.velx -= this.velx * (1 - VELOCITY_RETENTION);
+        this.vely -= this.vely * (1 - VELOCITY_RETENTION);
+      }
+
+      this.scatter = function() {
+        var unit = this.unitVecToMouse();
+        var vel = SCATTER_VELOCITY * 10 * (0.5 + Math.random() / 2);
+        this.velx = -unit.x * vel;
+        this.vely = -unit.y * vel;
+      }
+
+      this.move = function() {
+        if (this.distanceToMouse() <= FLEE_DISTANCE) {
+          this.fleeFrom(MOUSE.x, MOUSE.y);
+        } else {
+          this.settleTo(this.target_x, this.target_y);
+        }
+
+        if (this.x + this.velx < 0 || this.x + this.velx >= canvas.width) {
+          this.velx *= -1;
+        }
+        if (this.y + this.vely < 0 || this.y + this.vely >= canvas.height) {
+          this.vely *= -1;
+        }
+
+        this.x += this.velx;
+        this.y += this.vely;
+      }
+
+      this.distanceToTarget = function() {
+        return this.distanceTo(this.target_x, this.target_y);
+      }
+
+      this.distanceToMouse = function() {
+        return this.distanceTo(MOUSE.x, MOUSE.y);
+      }
+
+      this.distanceTo = function(x, y) {
+        return Math.sqrt((x - this.x) * (x - this.x) + (y - this.y) * (y - this.y));
+      }
+
+      this.unitVecToTarget = function() {
+        return this.unitVecTo(this.target_x, this.target_y);
+      }
+
+      this.unitVecToMouse = function() {
+        return this.unitVecTo(MOUSE.x, MOUSE.y);
+      }
+
+      this.unitVecTo = function(x, y) {
+        var dx = x - this.x;
+        var dy = y - this.y;
+        return {
+          x: dx / Math.sqrt(dx * dx + dy * dy),
+          y: dy / Math.sqrt(dx * dx + dy * dy)
+        };
+      }
+    }
+
+    window.addEventListener("resize", function() {
+      resizeCanvas()
+      adjustText()
+    });
+
+    if (FLEE) {
+      window.addEventListener("mousemove", function(event) {
+        MOUSE.x = event.clientX;
+        MOUSE.y = event.clientY;
+      });
+    }
+
+    if (SCATTER) {
+      window.addEventListener("click", function(event) {
+        MOUSE.x = event.clientX;
+        MOUSE.y = event.clientY;
+        for (var i = 0; i < POINTS.length; i++) {
+          POINTS[i].scatter();
+        }
+      });
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function adjustText() {
+      ctx.fillStyle = COLOR;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.font = FONT_SIZE + "px Arial";
+      ctx.fillText(MESSAGE, canvas.width / 2, canvas.height / 2);
+      var textWidth = ctx.measureText(MESSAGE).width / 0.8;
+      if (textWidth == 0) {
+        return;
+      }
+      var minX = canvas.width / 2 - textWidth / 2;
+      var minY = canvas.height / 2 - FONT_SIZE / 2;
+      var data = ctx.getImageData(minX, minY, textWidth, FONT_SIZE).data;
+      var isBlank = true;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i] != 0) {
+          isBlank = false;
+          break;
+        }
+      }
+
+      if (!isBlank) {
+        var count = 0;
+        var curr = 0;
+        var num = 0;
+        var x = 0;
+        var y = 0;
+        var w = Math.floor(textWidth);
+        POINTS = [];
+        while (count < AMOUNT) {
+          while (curr == 0) {
+            num = Math.floor(Math.random() * data.length);
+            curr = data[num];
+          }
+          num = Math.floor(num / 4);
+          x = w / 2 - num % w;
+          y = FONT_SIZE / 2 - Math.floor(num / w);
+          POINTS.push(new Point(x, y, data[num * 4], data[num * 4 + 1], data[num * 4 + 2], data[num * 4 + 3]));
+          curr = 0;
+          count++;
+        }
+      }
+    }
+
+    function init() {
+      resizeCanvas()
+      adjustText()
+      window.requestAnimationFrame(animate);
+    }
+
+    function animate() {
+      update();
+      draw();
+    }
+
+    function update() {
+      var point;
+      for (var i = 0; i < POINTS.length; i++) {
+        point = POINTS[i];
+        point.move();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      var point;
+      for (var i = 0; i < POINTS.length; i++) {
+        point = POINTS[i];
+        ctx.fillStyle = "rgba(" + point.r + "," + point.g + "," + point.b + "," + point.a + ")";
+        ctx.beginPath();
+        ctx.arc(point.getX(), point.getY(), SIZE, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      window.requestAnimationFrame(animate);
+    }
+    let title = document.querySelector("#title");
+
+    function run() {
+      if (title.innerHTML === "1") {
+        document.querySelector("h1").innerHTML = "";
+      }
+      title.innerHTML = (title.innerHTML - 1).toString();
+    }
+    setInterval(run, 1000);
+    setTimeout(init, 10000)
+  </script>
+
+</body>
+
+</html>
